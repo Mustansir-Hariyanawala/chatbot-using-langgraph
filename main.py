@@ -2,49 +2,34 @@ from chatbot import MainChatBot, ChatState
 from langchain_core.messages import HumanMessage, SystemMessage
 import streamlit as st
 
-# Set page configuration
-st.set_page_config(page_title="LangGraph Chatbot", page_icon="🤖", layout="centered")
+if 'history' not in st.session_state:
+    st.session_state['history'] = []
 
-# Initialize session state
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "chat_model" not in st.session_state:
-    st.session_state.chat_model = MainChatBot()
-    st.session_state.chat_model.initialize_workflow()
-
-if "thread_id" not in st.session_state:
-    st.session_state.thread_id = 1
-
-# Display title
-st.title("🤖 LangGraph Chatbot")
-st.write("Chat with an AI powered by LangGraph and Groq!")
-
-# Display chat history
-for message in st.session_state.messages:
+#st.session_state -> dict
+#loading conversation
+for message in st.session_state['history']:
     with st.chat_message(message['role']):
-        st.markdown(message['content'])
+        st.text(message['content'])
+        
+MODEL = MainChatBot()
+MODEL.initialize_workflow()
+CONFIG = {"configurable": {'thread_id': 'thread-1'}}
 
-# Chat input
-if user_input := st.chat_input('Type your message here...'):
-    # Add user message to chat history
-    st.session_state.messages.append({'role': 'user', 'content': user_input})
+user_input = st.chat_input('Type here')
+
+
+if user_input:
     
-    # Display user message
+    #first add message to message_history
+    st.session_state['history'].append({'role': 'user', 'content': user_input})
+    
+    #display user_input in chat
     with st.chat_message('user'):
-        st.markdown(user_input)
+        st.text(user_input)
     
-    # Get AI response
-    config = {"configurable": {'thread_id': st.session_state.thread_id}}
-    
+    #Assistant side    
+    chat_response = MODEL.workflow.invoke({"messages": [HumanMessage(content=user_input)]}, config=CONFIG)
+    response = chat_response['messages'][-1].content
+    st.session_state['history'].append({'role': 'assistant', 'content': response})
     with st.chat_message('assistant'):
-        with st.spinner("Thinking..."):
-            response = st.session_state.chat_model.workflow.invoke(
-                input={"messages": [HumanMessage(content=user_input)]}, 
-                config=config
-            )
-            ai_response = response['messages'][-1].content
-            st.markdown(ai_response)
-    
-    # Add AI response to chat history
-    st.session_state.messages.append({'role': 'assistant', 'content': ai_response})
+        st.text(response)
