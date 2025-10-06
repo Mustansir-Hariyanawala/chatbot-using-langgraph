@@ -7,7 +7,7 @@ if 'history' not in st.session_state:
 
 #st.session_state -> dict
 #loading conversation
-for message in st.session_state['history']:
+for message in st.session_state['history']:     
     with st.chat_message(message['role']):
         st.text(message['content'])
         
