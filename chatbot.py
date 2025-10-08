@@ -96,9 +96,12 @@ class MainChatBot():
 # config = {"configurable": {"thread_id": "user-123"}}
 
 # # The input message must be a list of BaseMessage objects (e.g., HumanMessage)
-# initial_input = {"messages": [HumanMessage(content='Hello')]}
+# initial_input = {"messages": [HumanMessage(content='Hello, how are you? Tell me about Taj Mahal')]}
 
 # # Invoke the workflow with the input and the config
-# response = model.workflow.invoke(initial_input, config=config)
+# for message_chunk, metadata in model.workflow.stream(initial_input, config=config, stream_mode='messages'):
+#     if message_chunk.content:
+#         print(message_chunk.content, end=" ", flush=True)
 
+# print(type(response))
 # print(response['messages'][-1].content)
