@@ -1,20 +1,63 @@
 from chatbot import MainChatBot, ChatState
 from langchain_core.messages import HumanMessage, SystemMessage
 import streamlit as st
+import uuid
 
+#Main chat bot object in which the workflow is created and initialized       
+MODEL = MainChatBot()
+MODEL.initialize_workflow()
+
+#Configuring threads
+CONFIG = {"configurable": {'thread_id': st.session_state['thread_id']}}
+# ***************************Utility Functions***********************
+
+def generate_thread_id():
+    thread_id = uuid.uuid4()
+    return thread_id
+
+def reset_chat():
+    thread_id = generate_thread_id()
+    st.session_state['thread_id'] = thread_id  
+    add_thread(st.session_state['thread_id']) 
+    st.session_state['history'] = []
+
+def add_thread(thread_id):
+    if thread_id not in st.session_state['chat_threads']:
+        st.session_state['chat_threads'].append(thread_id)
+        
+def load_conversation(thread_id, workflow: MainChatBot):
+    return workflow.workflow.get_state(config = {'configurable' : {'thread_id' : thread_id}}).values['message']
+# ************************************* Session Setup **************************
 if 'history' not in st.session_state:
     st.session_state['history'] = []
 
+if 'thread_id' not in st.session_state:
+    st.session_state['thread_id'] = generate_thread_id()
+    
+if 'chat_threads' not in st.session_state:
+    st.session_state['chat_threads'] = []
+    
+add_thread(st.session_state['thread_id'])
+# ************************************** SideBar UI ****************************** 
+st.sidebar.title('LangGraph Chatbot')
+
+if st.sidebar.button('New Chat'):
+    reset_chat()
+
+st.sidebar.header('My Conversations')
+
+for thread_id in st.session_state['chat_threads']:
+    if st.sidebar.button(str(thread_id)):
+        st.session_state['thread_id'] = thread_id
+        load_conversation(thread_id=thread_id)
+# ************************************** Main Chat Section *******************
 #st.session_state -> dict
 #loading conversation
 for message in st.session_state['history']:     
     with st.chat_message(message['role']):
         st.text(message['content'])
-        
-MODEL = MainChatBot()
-MODEL.initialize_workflow()
-CONFIG = {"configurable": {'thread_id': 'thread-1'}}
 
+#
 user_input = st.chat_input('Type here')
 
 
